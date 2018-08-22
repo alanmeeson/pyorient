@@ -6,12 +6,13 @@ from __future__ import print_function
 
 __author__ = 'Ostico <ostico@gmail.com>'
 
+import logging
 import socket
 import struct
 import select
 
 from .exceptions import PyOrientBadMethodCallException, \
-    PyOrientConnectionException, PyOrientWrongProtocolVersionException, \
+    PyOrientConnectionException, \
     PyOrientConnectionPoolException
 
 from .constants import FIELD_SHORT, \
@@ -22,6 +23,8 @@ from .constants import FIELD_SHORT, \
 from .serializations import OrientSerialization
 
 from .utils import dlog
+
+logger = logging.getLogger(__name__)
 
 type_map = {'BOOLEAN' :0,
             'INTEGER' :1,
@@ -101,9 +104,13 @@ class OrientSocket(object):
 
             self.protocol = struct.unpack('!h', _value)[0]
             if self.protocol > SUPPORTED_PROTOCOL:
-                raise PyOrientWrongProtocolVersionException(
-                    "Protocol version " + str(self.protocol) +
-                    " is not supported yet by this client.", [])
+                logger.warning(
+                    ("The Client driver version is different than Server "
+                     "version: client=%s, server=%s. "
+                     "You could not use the full features of the newer "
+                     "version. Assure to have the same versions on"
+                     "both"), SUPPORTED_PROTOCOL, self.protocol)
+
             self.connected = True
         except socket.error as e:
             self.connected = False
@@ -420,9 +427,9 @@ class OrientDB(object):
         self.nodes = nodes
 
         # store property id->property name, type map for binary serialization
-        
+
         self.update_properties()
-        
+
         return self.clusters
 
     def db_reload(self):
@@ -437,7 +444,7 @@ class OrientDB(object):
         self.update_properties()
         return self.clusters
 
-        
+
     def update_properties(self):
         '''
         This method fetches the global Properties from the server. The properties are used
@@ -449,7 +456,7 @@ class OrientDB(object):
         if self._serialization_type==OrientSerialization.Binary:
             self._connection._props.update({x['id']:[x['name'], type_map[x['type']]] for x in
                         self.command("select from #0:1")[0].oRecordData['globalProperties']})
-        
+
     def shutdown(self, *args):
         return self.get_message("ShutdownMessage") \
             .prepare(args).send().fetch_response()
@@ -552,9 +559,9 @@ class OrientDB(object):
             )
 
     def _push_received(self, command_id, payload):
-        # REQUEST_PUSH_RECORD	        79
-        # REQUEST_PUSH_DISTRIB_CONFIG	80
-        # REQUEST_PUSH_LIVE_QUERY	    81
+        # REQUEST_PUSH_RECORD            79
+        # REQUEST_PUSH_DISTRIB_CONFIG    80
+        # REQUEST_PUSH_LIVE_QUERY        81
         # TODO: this logic must stay within Messages class here I just want to receive
         # an object of something, like a new array of cluster.
         if command_id == 80:
