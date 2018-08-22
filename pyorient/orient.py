@@ -108,7 +108,7 @@ class OrientSocket(object):
                     ("The Client driver version is different than Server "
                      "version: client=%s, server=%s. "
                      "You could not use the full features of the newer "
-                     "version. Assure to have the same versions on"
+                     "version. Assure to have the same versions on "
                      "both"), SUPPORTED_PROTOCOL, self.protocol)
 
             self.connected = True
