@@ -103,7 +103,7 @@ class OrientSocket(object):
                 )
 
             self.protocol = struct.unpack('!h', _value)[0]
-            if self.protocol > SUPPORTED_PROTOCOL:
+            if self.protocol != SUPPORTED_PROTOCOL:
                 logger.warning(
                     ("The Client driver version is different than Server "
                      "version: client=%s, server=%s. "
